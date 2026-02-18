@@ -1,6 +1,6 @@
 # RxDB Chat
 
-<video src="docs/demo.mp4" autoplay loop muted playsinline controls style="max-height: 33vh; width: auto;"></video>
+https://github.com/user-attachments/assets/16133f61-89bc-491d-b7ec-474998bef545
 
 An offline-first Reddit-style discussion app built with RxDB, React, and Express. Data is stored locally in IndexedDB and syncs to a SQLite backend via HTTP push/pull replication with real-time SSE updates.
 
