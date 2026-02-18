@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+client/dist/
+
+# Database
+server/data/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Claude Code
+.claude/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log

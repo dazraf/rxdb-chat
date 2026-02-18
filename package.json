@@ -1,0 +1,20 @@
+{
+  "name": "rxdb-chat",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "npm run server & npm run client & wait",
+    "server": "npm run dev -w server",
+    "client": "npm run dev -w client",
+    "clear-posts": "npm run clear-posts -w server",
+    "test": "npm test -w server",
+    "test:e2e": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
