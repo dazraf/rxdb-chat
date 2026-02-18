@@ -83,7 +83,7 @@ test.describe('Offline sync', () => {
       const postTitle = `Sync Test ${Date.now()}`;
       await alice.getByRole('link', { name: 'New Post', exact: true }).click();
       await alice.getByLabel('Title').fill(postTitle);
-      await alice.getByLabel('Body').fill('Test body');
+      await alice.locator('#post-body').fill('Test body');
       await alice.getByRole('button', { name: 'Create Post' }).click();
       await expect(alice.locator('article.post-detail h1')).toHaveText(postTitle);
 

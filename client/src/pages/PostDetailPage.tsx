@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useRxData } from 'rxdb-hooks';
 import { CommentList } from '../components/CommentList';
 import { CommentForm } from '../components/CommentForm';
+import { MarkdownRenderer } from '../components/MarkdownRenderer';
+import { AttachmentDisplay } from '../components/AttachmentDisplay';
 import type { PostDoc, CommentDoc } from 'shared/schemas';
 
 export function PostDetailPage() {
@@ -33,7 +35,10 @@ export function PostDetailPage() {
         <p className="post-meta">
           by {post.authorName} &middot; {new Date(post.createdAt).toLocaleDateString()}
         </p>
-        <div className="post-body">{post.body}</div>
+        <div className="post-body">
+          <MarkdownRenderer content={post.body} />
+        </div>
+        <AttachmentDisplay parentId={post.id} />
       </article>
       <section className="comments-section">
         <h2>Comments ({(comments as unknown as CommentDoc[]).length})</h2>

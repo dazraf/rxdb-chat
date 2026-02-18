@@ -3,12 +3,21 @@ import type Database from 'better-sqlite3';
 import { authMiddleware } from '../middleware/auth.js';
 import { sseSubject } from '../sse.js';
 
-const VALID_COLLECTIONS = ['posts', 'comments'] as const;
+const VALID_COLLECTIONS = ['posts', 'comments', 'attachments'] as const;
 type CollectionName = (typeof VALID_COLLECTIONS)[number];
 
 function isValidCollection(name: string): name is CollectionName {
   return VALID_COLLECTIONS.includes(name as CollectionName);
 }
+
+const COLUMN_MAP: Record<CollectionName, string[]> = {
+  posts: ['id', 'title', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
+  comments: ['id', 'postId', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
+  attachments: [
+    'id', 'parentId', 'parentType', 'filename', 'mimeType', 'sizeBytes',
+    'storageUrl', 'uploadStatus', 'authorId', 'createdAt', 'updatedAt', '_deleted',
+  ],
+};
 
 export function createReplicationRoutes(db: Database.Database): Router {
   const router = Router();
@@ -66,10 +75,7 @@ export function createReplicationRoutes(db: Database.Database): Router {
     const conflicts: Record<string, unknown>[] = [];
     const written: Record<string, unknown>[] = [];
 
-    const columns =
-      collection === 'posts'
-        ? ['id', 'title', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted']
-        : ['id', 'postId', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'];
+    const columns = COLUMN_MAP[collection];
 
     const placeholders = columns.map(() => '?').join(', ');
     const updateSet = columns

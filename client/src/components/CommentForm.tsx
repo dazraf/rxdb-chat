@@ -1,20 +1,43 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useCallback } from 'react';
 import { useRxCollection } from 'rxdb-hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../auth/AuthContext';
+import { MarkdownToolbar } from './MarkdownToolbar';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { useMarkdownEditor } from '../hooks/useMarkdownEditor';
+import { FilePicker } from './FilePicker';
+import { VoiceRecorder } from './VoiceRecorder';
+import { useAttachmentUpload } from '../hooks/useAttachmentUpload';
 import type { CommentDoc } from 'shared/schemas';
 
 export function CommentForm({ postId }: { postId: string }) {
   const [body, setBody] = useState('');
+  const [preview, setPreview] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const collection = useRxCollection<CommentDoc>('comments');
   const { user } = useAuth();
+  const { uploadFile } = useAttachmentUpload();
+
+  const setBodyFn = useCallback((updater: (prev: string) => string) => {
+    setBody((prev) => updater(prev));
+  }, []);
+  const { textareaRef, insertMarkdown } = useMarkdownEditor(setBodyFn);
+
+  function handleFiles(files: File[]) {
+    setPendingFiles((prev) => [...prev, ...files]);
+  }
+
+  function removePending(index: number) {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!collection || !user || !body.trim()) return;
 
+    const commentId = uuidv4();
     await collection.insert({
-      id: uuidv4(),
+      id: commentId,
       postId,
       body: body.trim(),
       authorId: user.id,
@@ -24,19 +47,54 @@ export function CommentForm({ postId }: { postId: string }) {
       _deleted: false,
     });
 
+    // Upload pending files
+    for (const file of pendingFiles) {
+      await uploadFile(file, commentId, 'comment');
+    }
+
     setBody('');
+    setPreview(false);
+    setPendingFiles([]);
   }
 
   return (
     <form onSubmit={handleSubmit} className="comment-form">
-      <textarea
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder="Write a comment..."
-        rows={3}
-        required
+      <MarkdownToolbar
+        onAction={insertMarkdown}
+        preview={preview}
+        onTogglePreview={() => setPreview((p) => !p)}
       />
-      <button type="submit">Comment</button>
+      {preview ? (
+        <div className="md-preview">
+          <MarkdownRenderer content={body} />
+        </div>
+      ) : (
+        <textarea
+          ref={textareaRef}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Write a comment..."
+          rows={3}
+          required
+        />
+      )}
+
+      <div className="attachment-actions">
+        <button type="submit">Comment</button>
+        <FilePicker onFiles={handleFiles} />
+        <VoiceRecorder onRecorded={(file) => setPendingFiles((prev) => [...prev, file])} />
+      </div>
+
+      {pendingFiles.length > 0 && (
+        <div className="pending-files">
+          {pendingFiles.map((f, i) => (
+            <span key={i} className="pending-file">
+              {f.name}
+              <button type="button" onClick={() => removePending(i)}>&times;</button>
+            </span>
+          ))}
+        </div>
+      )}
     </form>
   );
 }

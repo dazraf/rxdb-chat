@@ -1,4 +1,6 @@
 import type { CommentDoc } from 'shared/schemas';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { AttachmentDisplay } from './AttachmentDisplay';
 
 export function CommentList({ comments }: { comments: CommentDoc[] }) {
   if (comments.length === 0) {
@@ -13,7 +15,8 @@ export function CommentList({ comments }: { comments: CommentDoc[] }) {
             <strong>{comment.authorName}</strong> &middot;{' '}
             {new Date(comment.createdAt).toLocaleDateString()}
           </p>
-          <p>{comment.body}</p>
+          <MarkdownRenderer content={comment.body} />
+          <AttachmentDisplay parentId={comment.id} />
         </div>
       ))}
     </div>

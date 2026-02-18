@@ -1,25 +1,48 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRxCollection } from 'rxdb-hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../auth/AuthContext';
+import { MarkdownToolbar } from '../components/MarkdownToolbar';
+import { MarkdownRenderer } from '../components/MarkdownRenderer';
+import { useMarkdownEditor } from '../hooks/useMarkdownEditor';
+import { FilePicker } from '../components/FilePicker';
+import { VoiceRecorder } from '../components/VoiceRecorder';
+import { useAttachmentUpload } from '../hooks/useAttachmentUpload';
 import type { PostDoc } from 'shared/schemas';
 
 export function CreatePostPage() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const collection = useRxCollection<PostDoc>('posts');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { uploadFile } = useAttachmentUpload();
+
+  const setBodyFn = useCallback((updater: (prev: string) => string) => {
+    setBody((prev) => updater(prev));
+  }, []);
+  const { textareaRef, insertMarkdown } = useMarkdownEditor(setBodyFn);
+
+  function handleFiles(files: File[]) {
+    setPendingFiles((prev) => [...prev, ...files]);
+  }
+
+  function removePending(index: number) {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!collection || !user) return;
 
     try {
+      const postId = uuidv4();
       const post: PostDoc = {
-        id: uuidv4(),
+        id: postId,
         title: title.trim(),
         body: body.trim(),
         authorId: user.id,
@@ -29,7 +52,13 @@ export function CreatePostPage() {
         _deleted: false,
       };
       await collection.insert(post);
-      navigate(`/post/${post.id}`);
+
+      // Upload pending files
+      for (const file of pendingFiles) {
+        await uploadFile(file, postId, 'post');
+      }
+
+      navigate(`/post/${postId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create post');
     }
@@ -44,10 +73,45 @@ export function CreatePostPage() {
           Title
           <input value={title} onChange={(e) => setTitle(e.target.value)} required />
         </label>
-        <label>
-          Body
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} required />
-        </label>
+        <div>
+          <label htmlFor="post-body">Body</label>
+          <MarkdownToolbar
+            onAction={insertMarkdown}
+            preview={preview}
+            onTogglePreview={() => setPreview((p) => !p)}
+          />
+          {preview ? (
+            <div className="md-preview">
+              <MarkdownRenderer content={body} />
+            </div>
+          ) : (
+            <textarea
+              id="post-body"
+              ref={textareaRef}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={6}
+              required
+            />
+          )}
+        </div>
+
+        <div className="attachment-actions">
+          <FilePicker onFiles={handleFiles} />
+          <VoiceRecorder onRecorded={(file) => setPendingFiles((prev) => [...prev, file])} />
+        </div>
+
+        {pendingFiles.length > 0 && (
+          <div className="pending-files">
+            {pendingFiles.map((f, i) => (
+              <span key={i} className="pending-file">
+                {f.name}
+                <button type="button" onClick={() => removePending(i)}>&times;</button>
+              </span>
+            ))}
+          </div>
+        )}
+
         <button type="submit">Create Post</button>
       </form>
     </div>

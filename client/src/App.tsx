@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider as RxDBProvider } from 'rxdb-hooks';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { ThemeProvider } from './theme/ThemeContext';
 import { NavBar } from './components/NavBar';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
@@ -61,12 +62,14 @@ function AppRoutes() {
 export function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <NavBar />
-        <main className="container">
-          <AppRoutes />
-        </main>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <NavBar />
+          <main className="container">
+            <AppRoutes />
+          </main>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getDatabase, AppDatabase } from '../database';
 import { startReplication, cancelReplication } from '../database/replication';
+import { startUploadSync } from '../database/uploadSync';
 
 interface User {
   id: string;
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (db && token) {
       startReplication(db, token);
+      startUploadSync(token);
     }
     return () => {
       cancelReplication();

@@ -145,4 +145,116 @@ describe('Replication routes', () => {
       expect(pullRes.body.documents[0].postId).toBe('post-1');
     });
   });
+
+  describe('Attachments collection', () => {
+    it('push and pull works for attachments', async () => {
+      const attachment = {
+        id: 'att-1',
+        parentId: 'post-1',
+        parentType: 'post',
+        filename: 'photo.png',
+        mimeType: 'image/png',
+        sizeBytes: 12345,
+        storageUrl: '/api/uploads/abc.png',
+        uploadStatus: 'uploaded',
+        authorId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/attachments/push')
+        .send([{ newDocumentState: attachment, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(200);
+      expect(pushRes.body).toEqual([]);
+
+      const pullRes = await authGet('/api/replication/attachments/pull');
+      expect(pullRes.status).toBe(200);
+      expect(pullRes.body.documents).toHaveLength(1);
+      expect(pullRes.body.documents[0].id).toBe('att-1');
+      expect(pullRes.body.documents[0].parentId).toBe('post-1');
+      expect(pullRes.body.documents[0].parentType).toBe('post');
+      expect(pullRes.body.documents[0].filename).toBe('photo.png');
+      expect(pullRes.body.documents[0].mimeType).toBe('image/png');
+      expect(pullRes.body.documents[0].sizeBytes).toBe(12345);
+      expect(pullRes.body.documents[0].storageUrl).toBe('/api/uploads/abc.png');
+      expect(pullRes.body.documents[0].uploadStatus).toBe('uploaded');
+      expect(pullRes.body.documents[0]._deleted).toBe(false);
+    });
+
+    it('handles conflict detection for attachments', async () => {
+      const attachment = {
+        id: 'att-1',
+        parentId: 'post-1',
+        parentType: 'post',
+        filename: 'photo.png',
+        mimeType: 'image/png',
+        sizeBytes: 12345,
+        storageUrl: '/api/uploads/abc.png',
+        uploadStatus: 'uploaded',
+        authorId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      // Initial push
+      await authPost('/api/replication/attachments/push')
+        .send([{ newDocumentState: attachment, assumedMasterState: null }]);
+
+      // Pull to get server version
+      const pullRes = await authGet('/api/replication/attachments/pull');
+      const serverDoc = pullRes.body.documents[0];
+
+      // Conflicting push with wrong assumedMasterState
+      const conflictRes = await authPost('/api/replication/attachments/push')
+        .send([{
+          newDocumentState: { ...attachment, uploadStatus: 'pending', updatedAt: Date.now() },
+          assumedMasterState: { ...serverDoc, updatedAt: 99999 },
+        }]);
+
+      expect(conflictRes.status).toBe(200);
+      expect(conflictRes.body).toHaveLength(1);
+      expect(conflictRes.body[0].id).toBe('att-1');
+    });
+
+    it('soft-deletes attachments via replication', async () => {
+      const attachment = {
+        id: 'att-2',
+        parentId: 'comment-1',
+        parentType: 'comment',
+        filename: 'voice.webm',
+        mimeType: 'audio/webm',
+        sizeBytes: 50000,
+        storageUrl: '/api/uploads/xyz.webm',
+        uploadStatus: 'uploaded',
+        authorId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      // Push the attachment
+      await authPost('/api/replication/attachments/push')
+        .send([{ newDocumentState: attachment, assumedMasterState: null }]);
+
+      // Pull and get the server version
+      const pullRes = await authGet('/api/replication/attachments/pull');
+      const serverDoc = pullRes.body.documents[0];
+
+      // Soft-delete
+      const deleteRes = await authPost('/api/replication/attachments/push')
+        .send([{
+          newDocumentState: { ...attachment, _deleted: true, updatedAt: Date.now() },
+          assumedMasterState: serverDoc,
+        }]);
+      expect(deleteRes.status).toBe(200);
+      expect(deleteRes.body).toEqual([]);
+
+      // Pull again - should see _deleted: true
+      const pullRes2 = await authGet('/api/replication/attachments/pull');
+      expect(pullRes2.body.documents).toHaveLength(1);
+      expect(pullRes2.body.documents[0]._deleted).toBe(true);
+    });
+  });
 });

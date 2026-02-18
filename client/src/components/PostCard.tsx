@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import type { PostDoc } from 'shared/schemas';
+import { stripMarkdown } from '../utils/stripMarkdown';
 
 export function PostCard({ post }: { post: PostDoc }) {
+  const preview = stripMarkdown(post.body);
+
   return (
     <div className="post-card">
       <Link to={`/post/${post.id}`}>
@@ -10,7 +13,7 @@ export function PostCard({ post }: { post: PostDoc }) {
       <p className="post-meta">
         by {post.authorName} &middot; {new Date(post.createdAt).toLocaleDateString()}
       </p>
-      <p className="post-body-preview">{post.body.slice(0, 200)}{post.body.length > 200 ? '...' : ''}</p>
+      <p className="post-body-preview">{preview.slice(0, 200)}{preview.length > 200 ? '...' : ''}</p>
     </div>
   );
 }

@@ -27,7 +27,7 @@ test.describe('Posts', () => {
 
     // Fill and submit
     await page.getByLabel('Title').fill(title);
-    await page.getByLabel('Body').fill('This is the body of my test post.');
+    await page.locator('#post-body').fill('This is the body of my test post.');
     await page.getByRole('button', { name: 'Create Post' }).click();
 
     // Should be on post detail page
