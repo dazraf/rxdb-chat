@@ -1,12 +1,16 @@
+import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { OnlineIndicator } from './OnlineIndicator';
 import { useTheme } from '../theme/ThemeContext';
+import { SunIcon } from './SunIcon';
+import { MoonIcon } from './MoonIcon';
+import { LaptopIcon } from './LaptopIcon';
 
-const THEME_ICONS: Record<string, string> = {
-  light: '\u2600',   // sun
-  dark: '\uD83C\uDF19',    // moon
-  system: '\uD83D\uDCBB',  // computer
+const THEME_ICONS: Record<string, ReactNode> = {
+  light: <SunIcon size={18} />,
+  dark: <MoonIcon size={18} />,
+  system: <LaptopIcon size={18} />,
 };
 
 export function NavBar() {
