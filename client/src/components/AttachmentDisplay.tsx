@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRxData } from 'rxdb-hooks';
 import type { AttachmentDoc } from 'shared/schemas';
 import { AudioPlayer } from './AudioPlayer';
@@ -58,6 +58,15 @@ export function AttachmentDisplay({ parentId }: { parentId: string }) {
 
 function ImageAttachment({ src, alt }: { src: string; alt: string }) {
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpanded(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [expanded]);
 
   return (
     <>
