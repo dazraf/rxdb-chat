@@ -17,6 +17,10 @@ Users can create posts, leave comments, and continue using the app while the ser
 |:---:|:---:|:---:|
 | ![Create post](docs/create-post.png) | ![Markdown preview](docs/markdown-preview.png) | ![Comments](docs/comments.png) |
 
+| Voice recording | Voice preview | Profile | Settings |
+|:---:|:---:|:---:|:---:|
+| ![Voice recording](docs/voice-recording.png) | ![Voice preview](docs/voice-preview.png) | ![Profile](docs/profile.png) | ![Settings](docs/settings.png) |
+
 ## Features
 
 - **Markdown Support** — Write posts and comments using Markdown with a formatting toolbar and live preview. Renders GFM (GitHub Flavored Markdown) including tables, strikethrough, and task lists.
