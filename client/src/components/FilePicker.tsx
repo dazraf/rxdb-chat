@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { PaperclipIcon } from './PaperclipIcon';
 
 interface Props {
   onFiles: (files: File[]) => void;
@@ -26,8 +27,9 @@ export function FilePicker({ onFiles }: Props) {
         type="button"
         className="file-picker-btn"
         onClick={() => inputRef.current?.click()}
+        title="Attach files"
       >
-        Attach files
+        <PaperclipIcon size={20} />
       </button>
     </>
   );

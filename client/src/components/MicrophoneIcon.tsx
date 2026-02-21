@@ -3,18 +3,11 @@ export function MicrophoneIcon({ size = 20 }: { size?: number }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 33.08 59.39"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.9}
-      strokeLinecap="round"
+      viewBox="0 0 16 16"
+      fill="currentColor"
     >
-      <g transform="translate(-61.18,-25.75)">
-        <path d="m 77.72,27.2 a 10.2,10.18 0 0 0 -10.2,10.18 v 22.01 a 10.2,10.18 0 0 0 10.2,10.18 10.2,10.18 0 0 0 10.2,-10.18 V 37.38 a 10.2,10.18 0 0 0 -10.2,-10.18 z" />
-        <path d="m 92.81,59.38 a 15.09,15.09 0 0 1 -15.09,15.07 15.09,15.09 0 0 1 -15.09,-15.07" />
-        <path d="m 65.43,83.69 h 24.59" />
-        <path d="m 77.72,83.53 v -9.61" />
-      </g>
+      <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5" />
+      <path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3" />
     </svg>
   );
 }
