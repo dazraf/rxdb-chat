@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { OnlineIndicator } from './OnlineIndicator';
+import { UserDropdown } from './UserDropdown';
 import { useTheme } from '../theme/ThemeContext';
 import { SunIcon } from './SunIcon';
 import { MoonIcon } from './MoonIcon';
@@ -14,7 +15,7 @@ const THEME_ICONS: Record<string, ReactNode> = {
 };
 
 export function NavBar() {
-  const { user, logout } = useAuth();
+  const { user, db } = useAuth();
   const { mode, resolved, cycleTheme } = useTheme();
 
   return (
@@ -28,21 +29,16 @@ export function NavBar() {
       </Link>
       <div className="nav-right">
         <OnlineIndicator />
-        <button
-          onClick={cycleTheme}
-          className="theme-toggle"
-          title={`Theme: ${mode}`}
-        >
-          {THEME_ICONS[mode]}
-        </button>
         {user && (
-          <>
-            <span className="nav-user">{user.username}</span>
-            <button onClick={logout} className="btn-link">
-              Log out
-            </button>
-          </>
+          <button
+            onClick={cycleTheme}
+            className="theme-toggle"
+            title={`Theme: ${mode}`}
+          >
+            {THEME_ICONS[mode]}
+          </button>
         )}
+        {user && db && <UserDropdown />}
       </div>
     </nav>
   );

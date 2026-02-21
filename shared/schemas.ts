@@ -35,6 +35,16 @@ export interface AttachmentDoc {
   _deleted: boolean;
 }
 
+export interface ProfileDoc {
+  id: string;
+  username: string;
+  avatarId: string;
+  about: string;
+  themeMode: 'light' | 'dark' | 'system';
+  updatedAt: number;
+  _deleted: boolean;
+}
+
 export interface ReplicationCheckpoint {
   id: string;
   updatedAt: number;

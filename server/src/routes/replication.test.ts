@@ -257,4 +257,81 @@ describe('Replication routes', () => {
       expect(pullRes2.body.documents[0]._deleted).toBe(true);
     });
   });
+
+  describe('Profiles collection', () => {
+    it('push and pull works for profiles', async () => {
+      const profile = {
+        id: 'user-1',
+        username: 'testuser',
+        avatarId: 'cat',
+        about: 'Hello world',
+        themeMode: 'dark',
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/profiles/push')
+        .send([{ newDocumentState: profile, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(200);
+      expect(pushRes.body).toEqual([]);
+
+      const pullRes = await authGet('/api/replication/profiles/pull');
+      expect(pullRes.status).toBe(200);
+      expect(pullRes.body.documents).toHaveLength(1);
+      expect(pullRes.body.documents[0].id).toBe('user-1');
+      expect(pullRes.body.documents[0].username).toBe('testuser');
+      expect(pullRes.body.documents[0].avatarId).toBe('cat');
+      expect(pullRes.body.documents[0].about).toBe('Hello world');
+      expect(pullRes.body.documents[0].themeMode).toBe('dark');
+      expect(pullRes.body.documents[0]._deleted).toBe(false);
+    });
+
+    it('handles conflict detection for profiles', async () => {
+      const profile = {
+        id: 'user-1',
+        username: 'testuser',
+        avatarId: 'default',
+        about: '',
+        themeMode: 'system',
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      // Initial push
+      await authPost('/api/replication/profiles/push')
+        .send([{ newDocumentState: profile, assumedMasterState: null }]);
+
+      // Pull to get server version
+      const pullRes = await authGet('/api/replication/profiles/pull');
+      const serverDoc = pullRes.body.documents[0];
+
+      // Conflicting push with wrong assumedMasterState
+      const conflictRes = await authPost('/api/replication/profiles/push')
+        .send([{
+          newDocumentState: { ...profile, avatarId: 'fox', updatedAt: Date.now() },
+          assumedMasterState: { ...serverDoc, updatedAt: 99999 },
+        }]);
+
+      expect(conflictRes.status).toBe(200);
+      expect(conflictRes.body).toHaveLength(1);
+      expect(conflictRes.body[0].id).toBe('user-1');
+    });
+
+    it('rejects pushing another user\'s profile with 403', async () => {
+      const otherProfile = {
+        id: 'other-user-id',
+        username: 'hacker',
+        avatarId: 'default',
+        about: 'hacked',
+        themeMode: 'system',
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/profiles/push')
+        .send([{ newDocumentState: otherProfile, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(403);
+      expect(pushRes.body.error).toMatch(/another user/i);
+    });
+  });
 });

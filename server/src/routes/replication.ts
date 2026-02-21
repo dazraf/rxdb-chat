@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { authMiddleware } from '../middleware/auth.js';
 import { sseSubject } from '../sse.js';
 
-const VALID_COLLECTIONS = ['posts', 'comments', 'attachments'] as const;
+const VALID_COLLECTIONS = ['posts', 'comments', 'attachments', 'profiles'] as const;
 type CollectionName = (typeof VALID_COLLECTIONS)[number];
 
 function isValidCollection(name: string): name is CollectionName {
@@ -17,6 +17,7 @@ const COLUMN_MAP: Record<CollectionName, string[]> = {
     'id', 'parentId', 'parentType', 'filename', 'mimeType', 'sizeBytes',
     'storageUrl', 'uploadStatus', 'authorId', 'createdAt', 'updatedAt', '_deleted',
   ],
+  profiles: ['id', 'username', 'avatarId', 'about', 'themeMode', 'updatedAt', '_deleted'],
 };
 
 export function createReplicationRoutes(db: Database.Database): Router {
@@ -70,6 +71,16 @@ export function createReplicationRoutes(db: Database.Database): Router {
     if (!Array.isArray(changeRows)) {
       res.status(400).json({ error: 'Body must be an array' });
       return;
+    }
+
+    // Ownership check: users can only push their own profile
+    if (collection === 'profiles') {
+      for (const { newDocumentState } of changeRows) {
+        if (newDocumentState.id !== req.user!.userId) {
+          res.status(403).json({ error: 'Cannot modify another user\'s profile' });
+          return;
+        }
+      }
     }
 
     const conflicts: Record<string, unknown>[] = [];

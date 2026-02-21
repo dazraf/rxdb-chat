@@ -33,7 +33,7 @@ export function PostDetailPage() {
       <article className="post-detail">
         <h1>{post.title}</h1>
         <p className="post-meta">
-          by {post.authorName} &middot; {new Date(post.createdAt).toLocaleDateString()}
+          by <Link to={`/profile/${post.authorId}`}>{post.authorName}</Link> &middot; {new Date(post.createdAt).toLocaleDateString()}
         </p>
         <div className="post-body">
           <MarkdownRenderer content={post.body} />

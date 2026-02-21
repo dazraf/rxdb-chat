@@ -1,5 +1,5 @@
 import type { RxJsonSchema } from 'rxdb';
-import type { PostDoc, CommentDoc, AttachmentDoc } from 'shared/schemas';
+import type { PostDoc, CommentDoc, AttachmentDoc, ProfileDoc } from 'shared/schemas';
 
 export const postSchema: RxJsonSchema<PostDoc> = {
   version: 0,
@@ -80,4 +80,26 @@ export const attachmentSchema: RxJsonSchema<AttachmentDoc> = {
     'storageUrl', 'uploadStatus', 'authorId', 'createdAt', 'updatedAt', '_deleted',
   ],
   indexes: ['updatedAt', ['parentId', 'updatedAt']],
+};
+
+export const profileSchema: RxJsonSchema<ProfileDoc> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 36 },
+    username: { type: 'string' },
+    avatarId: { type: 'string', maxLength: 20 },
+    about: { type: 'string' },
+    themeMode: { type: 'string', maxLength: 10 },
+    updatedAt: {
+      type: 'number',
+      minimum: 0,
+      maximum: 1e15,
+      multipleOf: 1,
+    },
+    _deleted: { type: 'boolean' },
+  },
+  required: ['id', 'username', 'avatarId', 'about', 'updatedAt', '_deleted'],
+  indexes: ['updatedAt'],
 };

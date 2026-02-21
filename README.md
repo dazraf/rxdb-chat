@@ -22,7 +22,8 @@ Users can create posts, leave comments, and continue using the app while the ser
 - **Markdown Support** — Write posts and comments using Markdown with a formatting toolbar and live preview. Renders GFM (GitHub Flavored Markdown) including tables, strikethrough, and task lists.
 - **File Attachments** — Attach images and videos to posts and comments. Files are uploaded to the server (5MB limit) or queued offline (50MB queue limit) and synced when connectivity returns. Click images to view full-size in a lightbox.
 - **Voice Recording** — Record voice clips directly in the browser using the MediaRecorder API. Recordings are saved as WebM/Opus audio and flow through the same attachment pipeline.
-- **Dark Mode** — Light, dark, and system theme modes. Persists to localStorage and respects OS `prefers-color-scheme`. Toggle via the navbar button.
+- **User Profiles** — Each user has a profile with a selectable avatar (8 animal icons) and an About section (markdown). Edit your own profile, view others by clicking author names on posts and comments. Settings page for theme preferences.
+- **Dark Mode** — Light, dark, and system theme modes. Persists to localStorage and respects OS `prefers-color-scheme`. Toggle via the navbar button or Settings page.
 - **Offline-First** — All reads and writes happen locally. Full functionality without a server connection, with automatic sync on reconnect.
 
 ## Tech Stack
@@ -46,8 +47,8 @@ rxdb-chat/
 │       ├── auth/       Auth context + API calls
 │       ├── database/   RxDB setup, schemas, replication, upload queue/sync
 │       ├── hooks/      useOnlineStatus, useMarkdownEditor, useAttachmentUpload, useVoiceRecorder
-│       ├── components/ NavBar, PostCard, CommentForm, MarkdownToolbar, FilePicker, VoiceRecorder, etc.
-│       ├── pages/      Login, Signup, Home, CreatePost, PostDetail
+│       ├── components/ NavBar, UserDropdown, AvatarIcon, PostCard, CommentForm, MarkdownToolbar, etc.
+│       ├── pages/      Login, Signup, Home, CreatePost, PostDetail, Profile, Settings
 │       ├── theme/      ThemeContext (light/dark/system)
 │       ├── utils/      stripMarkdown
 │       └── styles/
@@ -55,7 +56,7 @@ rxdb-chat/
 │   └── src/
 │       ├── routes/     /auth, /replication, /upload
 │       ├── middleware/  JWT auth middleware
-│       ├── db.ts       SQLite setup + schema (users, posts, comments, attachments)
+│       ├── db.ts       SQLite setup + schema (users, posts, comments, attachments, profiles)
 │       ├── sse.ts      RxJS Subject for broadcasting changes
 │       └── app.ts      Express app factory
 ├── shared/             TypeScript interfaces shared by client + server
@@ -103,7 +104,7 @@ Replication runs in the background using RxDB's replication plugin with a custom
 - **Pull**: The client fetches new documents using cursor-based pagination (`updatedAt` + `id`)
 - **SSE Stream**: The server broadcasts changes in real-time so other clients receive updates immediately
 
-Three collections are replicated: **posts**, **comments**, and **attachments**.
+Four collections are replicated: **posts**, **comments**, **attachments**, and **profiles**.
 
 ### File Uploads & Offline Queue
 
@@ -151,12 +152,12 @@ The app supports three theme modes: **light**, **dark**, and **system** (follows
 npm test
 ```
 
-48 tests across server and client:
+52 tests across server and client:
 
-**Server (34 tests):**
+**Server (38 tests):**
 - Auth middleware (JWT sign/verify, Bearer + query param auth)
-- Signup/login routes (validation, duplicates, credentials)
-- Replication push/pull/conflict handling for posts, comments, and attachments
+- Signup/login routes (validation, duplicates, credentials, profile creation)
+- Replication push/pull/conflict handling for posts, comments, attachments, and profiles (including ownership authorization)
 - File upload endpoint (mime filtering, size limits, static serving)
 
 **Client (14 tests):**
@@ -170,13 +171,14 @@ Server tests use in-memory SQLite databases for full isolation.
 npm run test:e2e
 ```
 
-19 tests across six suites:
+28 tests across seven suites:
 
 - **Auth** - Signup, login, duplicate username handling, unauthenticated redirects
 - **Posts** - Create post, navigate to detail, verify on home page
 - **Markdown** - Rendering on detail page, preview toggle, toolbar insertion, comment markdown, stripped preview on cards
 - **Theme Switcher** - Cycling through light/dark/system, background color changes, persistence across reload
 - **Attachments** - Image upload on post creation, remove pending file, image upload on comment
+- **Profiles** - Dropdown open/close (click, escape, outside click), profile edit (avatar + about), settings theme change, author name links to profile
 - **Offline Sync** - Two separate browsers: both post comments while the server is down, server restarts, both see each other's comments
 
 The offline sync test launches two independent Chromium instances and manages the server lifecycle directly to verify real-world sync behavior.

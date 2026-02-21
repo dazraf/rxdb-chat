@@ -38,6 +38,10 @@ export function createAuthRoutes(db: Database.Database): Router {
         createdAt,
       );
 
+      db.prepare(
+        'INSERT INTO profiles (id, username, avatarId, about, themeMode, updatedAt, _deleted) VALUES (?, ?, ?, ?, ?, ?, 0)',
+      ).run(id, username, 'default', '', 'system', Date.now());
+
       const token = signToken({ userId: id, username });
       res.json({ token, user: { id, username } });
     } catch (err) {

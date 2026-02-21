@@ -11,7 +11,7 @@ export function PostCard({ post }: { post: PostDoc }) {
         <h2>{post.title}</h2>
       </Link>
       <p className="post-meta">
-        by {post.authorName} &middot; {new Date(post.createdAt).toLocaleDateString()}
+        by <Link to={`/profile/${post.authorId}`}>{post.authorName}</Link> &middot; {new Date(post.createdAt).toLocaleDateString()}
       </p>
       <p className="post-body-preview">{preview.slice(0, 200)}{preview.length > 200 ? '...' : ''}</p>
     </div>

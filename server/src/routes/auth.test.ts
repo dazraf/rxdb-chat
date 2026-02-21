@@ -29,6 +29,23 @@ describe('Auth routes', () => {
       expect(row.username).toBe('alice');
     });
 
+    it('creates a default profile on signup', async () => {
+      const res = await request(app)
+        .post('/api/auth/signup')
+        .send({ username: 'alice', password: 'password123' });
+
+      expect(res.status).toBe(200);
+      const userId = res.body.user.id;
+
+      const profile = db.prepare('SELECT * FROM profiles WHERE id = ?').get(userId) as any;
+      expect(profile).toBeDefined();
+      expect(profile.username).toBe('alice');
+      expect(profile.avatarId).toBe('default');
+      expect(profile.about).toBe('');
+      expect(profile.themeMode).toBe('system');
+      expect(profile._deleted).toBe(0);
+    });
+
     it('returns 400 for missing fields', async () => {
       const res = await request(app)
         .post('/api/auth/signup')

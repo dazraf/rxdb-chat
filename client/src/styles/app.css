@@ -101,8 +101,72 @@ a:hover {
   gap: 1rem;
 }
 
-.nav-user {
-  font-weight: 500;
+/* ========== User dropdown ========== */
+.user-dropdown {
+  position: relative;
+}
+
+.avatar-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  padding: 0;
+}
+
+.avatar-btn:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 200;
+  padding: 0.25rem 0;
+}
+
+.dropdown-header {
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background: var(--color-bg);
+  text-decoration: none;
+}
+
+.dropdown-logout {
+  color: var(--color-danger-text);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .btn-link {
@@ -871,4 +935,173 @@ a:hover {
 .voice-preview .voice-discard {
   color: var(--color-btn-text);
   background: var(--color-muted);
+}
+
+/* ========== Profile page ========== */
+.profile-page {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.profile-avatar-large {
+  color: var(--color-text);
+}
+
+.profile-header h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.profile-about {
+  margin-bottom: 1.25rem;
+}
+
+.profile-about h3,
+.profile-about-edit h3,
+.avatar-picker h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.avatar-picker {
+  margin-bottom: 1.25rem;
+}
+
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.avatar-option {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  padding: 0;
+}
+
+.avatar-option:hover {
+  border-color: var(--color-border-hover);
+}
+
+.avatar-option.selected {
+  border-color: var(--color-brand);
+  background: var(--color-surface);
+}
+
+.profile-about-edit {
+  margin-bottom: 1.25rem;
+}
+
+.profile-about-edit textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.profile-about-edit textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ========== Settings page ========== */
+.settings-page {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.settings-page h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.settings-page h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--color-bg);
+}
+
+.theme-option:hover {
+  border-color: var(--color-border-hover);
+}
+
+.theme-option.selected {
+  border-color: var(--color-brand);
+}
+
+.theme-option input[type="radio"] {
+  accent-color: var(--color-brand);
+}
+
+.theme-option div {
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-option strong {
+  font-size: 0.9rem;
+}
+
+.theme-option span {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* ========== Author links ========== */
+.post-meta a,
+.comment-meta a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.post-meta a:hover,
+.comment-meta a:hover {
+  text-decoration: underline;
 }

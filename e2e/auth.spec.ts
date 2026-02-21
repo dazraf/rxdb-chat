@@ -12,13 +12,22 @@ async function fillSignupForm(page: Page, username: string, password: string) {
   await page.getByRole('button', { name: 'Sign Up' }).click();
 }
 
+async function logoutViaDropdown(page: Page) {
+  await page.getByRole('button', { name: 'User menu' }).click();
+  await page.locator('.dropdown-logout').click();
+}
+
 test.describe('Auth', () => {
-  test('signup: new user → redirected to home, username shown in navbar', async ({ page }) => {
+  test('signup: new user → redirected to home, avatar button visible', async ({ page }) => {
     const username = uniqueUser();
     await fillSignupForm(page, username, 'password123');
 
     await expect(page).toHaveURL('/');
-    await expect(page.locator('span.nav-user')).toHaveText(username);
+    // Avatar button is visible in navbar (replaces old nav-user span)
+    await expect(page.getByRole('button', { name: 'User menu' })).toBeVisible();
+    // Username shown in dropdown
+    await page.getByRole('button', { name: 'User menu' }).click();
+    await expect(page.locator('.dropdown-header')).toHaveText(username);
   });
 
   test('signup: duplicate username → error message shown', async ({ page }) => {
@@ -29,7 +38,7 @@ test.describe('Auth', () => {
     await expect(page).toHaveURL('/');
 
     // Log out, try same username
-    await page.getByRole('button', { name: 'Log out' }).click();
+    await logoutViaDropdown(page);
     await page.goto('/signup');
     await page.waitForLoadState('networkidle');
     await page.getByLabel('Username').fill(username);
@@ -48,7 +57,7 @@ test.describe('Auth', () => {
     await expect(page).toHaveURL('/');
 
     // Log out
-    await page.getByRole('button', { name: 'Log out' }).click();
+    await logoutViaDropdown(page);
 
     // Login
     await page.goto('/login');
@@ -58,7 +67,8 @@ test.describe('Auth', () => {
     await page.getByRole('button', { name: 'Log In' }).click();
 
     await expect(page).toHaveURL('/');
-    await expect(page.locator('span.nav-user')).toHaveText(username);
+    await page.getByRole('button', { name: 'User menu' }).click();
+    await expect(page.locator('.dropdown-header')).toHaveText(username);
   });
 
   test('login: wrong password → error message', async ({ page }) => {
@@ -69,7 +79,7 @@ test.describe('Auth', () => {
     await expect(page).toHaveURL('/');
 
     // Log out
-    await page.getByRole('button', { name: 'Log out' }).click();
+    await logoutViaDropdown(page);
 
     // Login with wrong password
     await page.goto('/login');

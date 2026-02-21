@@ -15,7 +15,7 @@ export const serverOnline$ = new BehaviorSubject<boolean>(true);
 export function startReplication(db: AppDatabase, token: string) {
   cancelReplication();
 
-  const collections = ['posts', 'comments', 'attachments'] as const;
+  const collections = ['posts', 'comments', 'attachments', 'profiles'] as const;
 
   for (const name of collections) {
     const collection = db[name];

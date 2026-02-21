@@ -1,12 +1,13 @@
 import { createRxDatabase, RxDatabase, RxStorage, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
-import { postSchema, commentSchema, attachmentSchema } from './schemas';
-import type { PostDoc, CommentDoc, AttachmentDoc } from 'shared/schemas';
+import { postSchema, commentSchema, attachmentSchema, profileSchema } from './schemas';
+import type { PostDoc, CommentDoc, AttachmentDoc, ProfileDoc } from 'shared/schemas';
 
 export type Collections = {
   posts: PostDoc;
   comments: CommentDoc;
   attachments: AttachmentDoc;
+  profiles: ProfileDoc;
 };
 
 export type AppDatabase = RxDatabase<Collections>;
@@ -37,6 +38,7 @@ export async function getDatabase(): Promise<AppDatabase> {
       posts: { schema: postSchema },
       comments: { schema: commentSchema },
       attachments: { schema: attachmentSchema },
+      profiles: { schema: profileSchema },
     });
 
     return db;

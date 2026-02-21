@@ -58,12 +58,37 @@ export function createDatabase(dbPath: string = DEFAULT_DB_PATH): Database.Datab
       _deleted INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS profiles (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL,
+      avatarId TEXT NOT NULL DEFAULT 'default',
+      about TEXT NOT NULL DEFAULT '',
+      themeMode TEXT NOT NULL DEFAULT 'system',
+      updatedAt INTEGER NOT NULL,
+      _deleted INTEGER NOT NULL DEFAULT 0
+    );
+
     CREATE INDEX IF NOT EXISTS idx_posts_updated ON posts (updatedAt, id);
     CREATE INDEX IF NOT EXISTS idx_comments_updated ON comments (updatedAt, id);
     CREATE INDEX IF NOT EXISTS idx_comments_post ON comments (postId, updatedAt);
     CREATE INDEX IF NOT EXISTS idx_attachments_updated ON attachments (updatedAt, id);
     CREATE INDEX IF NOT EXISTS idx_attachments_parent ON attachments (parentId, updatedAt);
+    CREATE INDEX IF NOT EXISTS idx_profiles_updated ON profiles (updatedAt, id);
   `);
+
+  // Add themeMode column to existing profiles tables (idempotent migration)
+  try {
+    db.exec(`ALTER TABLE profiles ADD COLUMN themeMode TEXT NOT NULL DEFAULT 'system'`);
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Backfill profiles for existing users that don't have one yet
+  db.prepare(
+    `INSERT OR IGNORE INTO profiles (id, username, avatarId, about, themeMode, updatedAt, _deleted)
+     SELECT id, username, 'default', '', 'system', strftime('%s','now') * 1000, 0
+     FROM users WHERE id NOT IN (SELECT id FROM profiles)`
+  ).run();
 
   return db;
 }

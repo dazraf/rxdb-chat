@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { CommentDoc } from 'shared/schemas';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { AttachmentDisplay } from './AttachmentDisplay';
@@ -12,7 +13,7 @@ export function CommentList({ comments }: { comments: CommentDoc[] }) {
       {comments.map((comment) => (
         <div key={comment.id} className="comment">
           <p className="comment-meta">
-            <strong>{comment.authorName}</strong> &middot;{' '}
+            <Link to={`/profile/${comment.authorId}`}><strong>{comment.authorName}</strong></Link> &middot;{' '}
             {new Date(comment.createdAt).toLocaleDateString()}
           </p>
           <MarkdownRenderer content={comment.body} />
