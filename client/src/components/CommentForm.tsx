@@ -8,12 +8,14 @@ import { useMarkdownEditor } from '../hooks/useMarkdownEditor';
 import { FilePicker } from './FilePicker';
 import { VoiceRecorder } from './VoiceRecorder';
 import { useAttachmentUpload } from '../hooks/useAttachmentUpload';
+import type { RecorderState } from '../hooks/useVoiceRecorder';
 import type { CommentDoc } from 'shared/schemas';
 
 export function CommentForm({ postId }: { postId: string }) {
   const [body, setBody] = useState('');
   const [preview, setPreview] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [recorderState, setRecorderState] = useState<RecorderState>('idle');
   const collection = useRxCollection<CommentDoc>('comments');
   const { user } = useAuth();
   const { uploadFile } = useAttachmentUpload();
@@ -33,7 +35,8 @@ export function CommentForm({ postId }: { postId: string }) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!collection || !user || !body.trim()) return;
+    if (!collection || !user) return;
+    if (!body.trim() && pendingFiles.length === 0) return;
 
     const commentId = uuidv4();
     await collection.insert({
@@ -75,14 +78,26 @@ export function CommentForm({ postId }: { postId: string }) {
           onChange={(e) => setBody(e.target.value)}
           placeholder="Write a comment..."
           rows={3}
-          required
         />
       )}
 
       <div className="attachment-actions">
-        <button type="submit">Comment</button>
-        <FilePicker onFiles={handleFiles} />
-        <VoiceRecorder onRecorded={(file) => setPendingFiles((prev) => [...prev, file])} />
+        {recorderState === 'idle' && (
+          <>
+            <FilePicker onFiles={handleFiles} />
+          </>
+        )}
+        <VoiceRecorder
+          onRecorded={(file) => setPendingFiles((prev) => [...prev, file])}
+          onStateChange={setRecorderState}
+        />
+        {recorderState === 'idle' && (
+          <button
+            type="submit"
+            className="action-submit"
+            disabled={!body.trim() && pendingFiles.length === 0}
+          >Comment</button>
+        )}
       </div>
 
       {pendingFiles.length > 0 && (

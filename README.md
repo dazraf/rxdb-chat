@@ -107,7 +107,7 @@ Three collections are replicated: **posts**, **comments**, and **attachments**.
 
 ### File Uploads & Offline Queue
 
-File attachments (images, video, audio) are uploaded to `POST /api/upload` and stored on disk. When the server is unreachable, files are queued in a separate IndexedDB store (`rxdb_reddit_uploads`) with a 50MB total limit. When the server comes back online, the upload sync worker flushes the queue and updates attachment documents with the server URL.
+File attachments (images, video, audio) are uploaded to `POST /api/upload` and stored on disk. When the server is unreachable, files are queued in a separate IndexedDB store (`kith_uploads`) with a 50MB total limit. When the server comes back online, the upload sync worker flushes the queue and updates attachment documents with the server URL.
 
 Limits:
 - **5MB per file** (enforced client-side and server-side via multer)

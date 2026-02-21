@@ -28,6 +28,7 @@ export function SignupPage() {
 
   return (
     <div className="auth-page">
+      <img src="/logo.png" alt="Kith" className="auth-logo" />
       <h1>Sign Up</h1>
       <form onSubmit={handleSubmit}>
         {error && <div className="error">{error}</div>}

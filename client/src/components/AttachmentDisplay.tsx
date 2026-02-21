@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRxData } from 'rxdb-hooks';
 import type { AttachmentDoc } from 'shared/schemas';
+import { AudioPlayer } from './AudioPlayer';
 
 export function AttachmentDisplay({ parentId }: { parentId: string }) {
   const { result } = useRxData<AttachmentDoc>('attachments', (collection) =>
@@ -40,9 +41,7 @@ export function AttachmentDisplay({ parentId }: { parentId: string }) {
           return (
             <div key={att.id} className="audio-attachment">
               <span className="audio-label">{att.filename}</span>
-              <audio src={att.storageUrl} controls preload="metadata">
-                Your browser does not support audio playback.
-              </audio>
+              <AudioPlayer src={att.storageUrl} />
             </div>
           );
         }

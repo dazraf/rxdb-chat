@@ -21,6 +21,7 @@ export function MarkdownToolbar({ onAction, preview, onTogglePreview }: Props) {
         <button
           key={action}
           type="button"
+          tabIndex={-1}
           title={title}
           onClick={() => onAction(action)}
         >
@@ -29,6 +30,7 @@ export function MarkdownToolbar({ onAction, preview, onTogglePreview }: Props) {
       ))}
       <button
         type="button"
+        tabIndex={-1}
         className={`preview-toggle ${preview ? 'active' : ''}`}
         onClick={onTogglePreview}
       >

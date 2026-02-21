@@ -1,4 +1,4 @@
-import { useState, FormEvent, useCallback } from 'react';
+import { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRxCollection } from 'rxdb-hooks';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +9,7 @@ import { useMarkdownEditor } from '../hooks/useMarkdownEditor';
 import { FilePicker } from '../components/FilePicker';
 import { VoiceRecorder } from '../components/VoiceRecorder';
 import { useAttachmentUpload } from '../hooks/useAttachmentUpload';
+import type { RecorderState } from '../hooks/useVoiceRecorder';
 import type { PostDoc } from 'shared/schemas';
 
 export function CreatePostPage() {
@@ -17,10 +18,16 @@ export function CreatePostPage() {
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [recorderState, setRecorderState] = useState<RecorderState>('idle');
+  const titleRef = useRef<HTMLInputElement>(null);
   const collection = useRxCollection<PostDoc>('posts');
   const { user } = useAuth();
   const navigate = useNavigate();
   const { uploadFile } = useAttachmentUpload();
+
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
 
   const setBodyFn = useCallback((updater: (prev: string) => string) => {
     setBody((prev) => updater(prev));
@@ -71,7 +78,7 @@ export function CreatePostPage() {
         {error && <div className="error">{error}</div>}
         <label>
           Title
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} required />
         </label>
         <div>
           <label htmlFor="post-body">Body</label>
@@ -97,8 +104,13 @@ export function CreatePostPage() {
         </div>
 
         <div className="attachment-actions">
-          <FilePicker onFiles={handleFiles} />
-          <VoiceRecorder onRecorded={(file) => setPendingFiles((prev) => [...prev, file])} />
+          {recorderState === 'idle' && (
+            <FilePicker onFiles={handleFiles} />
+          )}
+          <VoiceRecorder
+            onRecorded={(file) => setPendingFiles((prev) => [...prev, file])}
+            onStateChange={setRecorderState}
+          />
         </div>
 
         {pendingFiles.length > 0 && (

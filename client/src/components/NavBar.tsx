@@ -11,12 +11,16 @@ const THEME_ICONS: Record<string, string> = {
 
 export function NavBar() {
   const { user, logout } = useAuth();
-  const { mode, cycleTheme } = useTheme();
+  const { mode, resolved, cycleTheme } = useTheme();
 
   return (
     <nav className="navbar">
       <Link to="/" className="nav-brand">
-        RxDB Reddit
+        <img
+          src={resolved === 'dark' ? '/logo-nav-dark.png' : '/logo-nav.png'}
+          alt="kith"
+          className="nav-logo"
+        />
       </Link>
       <div className="nav-right">
         <OnlineIndicator />

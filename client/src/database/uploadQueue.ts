@@ -1,6 +1,6 @@
 import { MAX_QUEUE_BYTES } from 'shared/constants';
 
-const DB_NAME = 'rxdb_reddit_uploads';
+const DB_NAME = 'kith_uploads';
 const STORE_NAME = 'pending';
 
 interface QueueEntry {

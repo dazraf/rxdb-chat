@@ -27,7 +27,7 @@ export async function getDatabase(): Promise<AppDatabase> {
     }
 
     const db = await createRxDatabase<Collections>({
-      name: 'rxdb_reddit',
+      name: 'kith',
       storage,
       multiInstance: true,
       ignoreDuplicate: true,
