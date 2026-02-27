@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useRxCollection } from 'rxdb-hooks';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useRxCollection, useRxData } from 'rxdb-hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../auth/AuthContext';
 import { MarkdownToolbar } from '../components/MarkdownToolbar';
@@ -10,11 +10,16 @@ import { FilePicker } from '../components/FilePicker';
 import { VoiceRecorder } from '../components/VoiceRecorder';
 import { useAttachmentUpload } from '../hooks/useAttachmentUpload';
 import type { RecorderState } from '../hooks/useVoiceRecorder';
-import type { PostDoc } from 'shared/schemas';
+import type { PostDoc, SubDoc } from 'shared/schemas';
+import { DEFAULT_SUB_ID } from 'shared/constants';
 
 export function CreatePostPage() {
+  const location = useLocation();
+  const routeSubId = (location.state as { subId?: string } | null)?.subId;
+
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [subId, setSubId] = useState(routeSubId || DEFAULT_SUB_ID);
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -24,6 +29,10 @@ export function CreatePostPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { uploadFile } = useAttachmentUpload();
+
+  const { result: allSubs } = useRxData<SubDoc>('subs', (c) =>
+    c.find({ sort: [{ name: 'asc' }] }),
+  );
 
   useEffect(() => {
     titleRef.current?.focus();
@@ -52,6 +61,7 @@ export function CreatePostPage() {
         id: postId,
         title: title.trim(),
         body: body.trim(),
+        subId,
         authorId: user.id,
         authorName: user.username,
         createdAt: new Date().toISOString(),
@@ -76,6 +86,16 @@ export function CreatePostPage() {
       <h1>Create Post</h1>
       <form onSubmit={handleSubmit}>
         {error && <div className="error">{error}</div>}
+        <label>
+          Sub
+          <select value={subId} onChange={(e) => setSubId(e.target.value)}>
+            {(allSubs as unknown as SubDoc[]).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <label>
           Title
           <input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} required />

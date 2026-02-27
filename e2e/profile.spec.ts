@@ -176,7 +176,7 @@ test.describe('Author Links', () => {
 
     // Should be on post detail — author name should be a link
     await expect(page.locator('article.post-detail')).toBeVisible();
-    const authorLink = page.locator('.post-meta a').first();
+    const authorLink = page.locator('.post-meta a[href*="/profile/"]').first();
     await expect(authorLink).toHaveText(username);
     await authorLink.click();
     await expect(page).toHaveURL(/\/profile\//);

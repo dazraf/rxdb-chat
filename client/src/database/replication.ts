@@ -12,15 +12,32 @@ let cleanupFns: (() => void)[] = [];
 
 export const serverOnline$ = new BehaviorSubject<boolean>(true);
 
+// Collections that get their own SSE stream. Limit to 4 to stay within
+// the browser's HTTP/1.1 per-host connection cap (6), leaving headroom
+// for pull/push fetch requests.
+const SSE_COLLECTIONS = ['posts', 'comments', 'attachments', 'profiles'] as const;
+const ALL_COLLECTIONS = ['posts', 'comments', 'attachments', 'profiles', 'subs', 'subscriptions'] as const;
+
 export function startReplication(db: AppDatabase, token: string) {
   cancelReplication();
 
-  const collections = ['posts', 'comments', 'attachments', 'profiles'] as const;
+  // Create SSE streams only for the core collections
+  const sseStreams = new Map<string, { stream$: Observable<StreamItem>; cleanup: () => void }>();
+  for (const name of SSE_COLLECTIONS) {
+    const sse = createSseStream(name, token);
+    sseStreams.set(name, sse);
+    cleanupFns.push(sse.cleanup);
+  }
 
-  for (const name of collections) {
+  for (const name of ALL_COLLECTIONS) {
     const collection = db[name];
-    const { stream$, cleanup } = createSseStream(name, token);
-    cleanupFns.push(cleanup);
+    const sse = sseStreams.get(name);
+
+    // Collections without their own SSE use a Subject that gets
+    // RESYNC when any other SSE connection opens (via reSync()).
+    const pullStream$ = sse
+      ? sse.stream$
+      : new Subject<StreamItem>().asObservable();
 
     const replicationState = replicateRxCollection({
       collection: collection as never,
@@ -60,7 +77,7 @@ export function startReplication(db: AppDatabase, token: string) {
           if (!res.ok) throw new Error(`Pull failed: ${res.status}`);
           return await res.json();
         },
-        stream$: stream$ as Observable<RxReplicationPullStreamItem<never, ReplicationCheckpoint>>,
+        stream$: pullStream$ as Observable<RxReplicationPullStreamItem<never, ReplicationCheckpoint>>,
       },
     });
 

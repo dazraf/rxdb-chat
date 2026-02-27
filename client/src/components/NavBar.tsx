@@ -14,19 +14,30 @@ const THEME_ICONS: Record<string, ReactNode> = {
   system: <LaptopIcon size={18} />,
 };
 
-export function NavBar() {
+export function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const { user, db } = useAuth();
   const { mode, resolved, cycleTheme } = useTheme();
 
   return (
     <nav className="navbar">
-      <Link to="/" className="nav-brand">
-        <img
-          src={resolved === 'dark' ? '/logo-nav-dark.png' : '/logo-nav.png'}
-          alt="kith"
-          className="nav-logo"
-        />
-      </Link>
+      <div className="nav-left">
+        {user && onToggleSidebar && (
+          <button onClick={onToggleSidebar} className="sidebar-toggle" title="Toggle subs">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="5" x2="17" y2="5" />
+              <line x1="3" y1="10" x2="17" y2="10" />
+              <line x1="3" y1="15" x2="17" y2="15" />
+            </svg>
+          </button>
+        )}
+        <Link to="/" className="nav-brand">
+          <img
+            src={resolved === 'dark' ? '/logo-nav-dark.png' : '/logo-nav.png'}
+            alt="kith"
+            className="nav-logo"
+          />
+        </Link>
+      </div>
       <div className="nav-right">
         <OnlineIndicator />
         {user && (

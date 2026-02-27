@@ -1,14 +1,15 @@
 import type { RxJsonSchema } from 'rxdb';
-import type { PostDoc, CommentDoc, AttachmentDoc, ProfileDoc } from 'shared/schemas';
+import type { PostDoc, CommentDoc, AttachmentDoc, ProfileDoc, SubDoc, SubscriptionDoc } from 'shared/schemas';
 
 export const postSchema: RxJsonSchema<PostDoc> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
     id: { type: 'string', maxLength: 36 },
     title: { type: 'string' },
     body: { type: 'string' },
+    subId: { type: 'string', maxLength: 100 },
     authorId: { type: 'string', maxLength: 36 },
     authorName: { type: 'string' },
     createdAt: { type: 'string', maxLength: 30 },
@@ -20,8 +21,8 @@ export const postSchema: RxJsonSchema<PostDoc> = {
     },
     _deleted: { type: 'boolean' },
   },
-  required: ['id', 'title', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
-  indexes: ['updatedAt', ['authorId', 'updatedAt']],
+  required: ['id', 'title', 'body', 'subId', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
+  indexes: ['updatedAt', ['authorId', 'updatedAt'], ['subId', 'createdAt']],
 };
 
 export const commentSchema: RxJsonSchema<CommentDoc> = {
@@ -102,4 +103,47 @@ export const profileSchema: RxJsonSchema<ProfileDoc> = {
   },
   required: ['id', 'username', 'avatarId', 'about', 'updatedAt', '_deleted'],
   indexes: ['updatedAt'],
+};
+
+export const subSchema: RxJsonSchema<SubDoc> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    name: { type: 'string', maxLength: 50 },
+    description: { type: 'string' },
+    creatorId: { type: 'string', maxLength: 36 },
+    createdAt: { type: 'string', maxLength: 30 },
+    updatedAt: {
+      type: 'number',
+      minimum: 0,
+      maximum: 1e15,
+      multipleOf: 1,
+    },
+    _deleted: { type: 'boolean' },
+  },
+  required: ['id', 'name', 'description', 'creatorId', 'createdAt', 'updatedAt', '_deleted'],
+  indexes: ['updatedAt', 'name'],
+};
+
+export const subscriptionSchema: RxJsonSchema<SubscriptionDoc> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 150 },
+    userId: { type: 'string', maxLength: 36 },
+    subId: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string', maxLength: 30 },
+    updatedAt: {
+      type: 'number',
+      minimum: 0,
+      maximum: 1e15,
+      multipleOf: 1,
+    },
+    _deleted: { type: 'boolean' },
+  },
+  required: ['id', 'userId', 'subId', 'createdAt', 'updatedAt', '_deleted'],
+  indexes: ['updatedAt', ['userId', 'subId']],
 };

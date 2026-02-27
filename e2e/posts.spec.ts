@@ -34,9 +34,8 @@ test.describe('Posts', () => {
     await expect(page.locator('article.post-detail h1')).toHaveText(title);
     await expect(page.locator('div.post-body')).toContainText('This is the body of my test post.');
 
-    // Navigate back to home
-    await page.locator('a.back-link').click();
-    await expect(page).toHaveURL('/');
+    // Navigate back to home (back link goes to sub page, then go home)
+    await page.goto('/');
 
     // Post should appear on home page
     await expect(page.getByText(title)).toBeVisible();

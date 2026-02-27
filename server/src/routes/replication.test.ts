@@ -334,4 +334,154 @@ describe('Replication routes', () => {
       expect(pushRes.body.error).toMatch(/another user/i);
     });
   });
+
+  describe('Subs collection', () => {
+    it('seeds the default general sub', async () => {
+      const pullRes = await authGet('/api/replication/subs/pull');
+      expect(pullRes.status).toBe(200);
+      expect(pullRes.body.documents).toHaveLength(1);
+      expect(pullRes.body.documents[0].name).toBe('general');
+      expect(pullRes.body.documents[0]._deleted).toBe(false);
+    });
+
+    it('push and pull works for subs', async () => {
+      const sub = {
+        id: 'programming',
+        name: 'programming',
+        description: 'Talk about code',
+        creatorId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/subs/push')
+        .send([{ newDocumentState: sub, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(200);
+      expect(pushRes.body).toEqual([]);
+
+      const pullRes = await authGet('/api/replication/subs/pull');
+      expect(pullRes.status).toBe(200);
+      // general + programming
+      expect(pullRes.body.documents.length).toBeGreaterThanOrEqual(2);
+      const names = pullRes.body.documents.map((d: { name: string }) => d.name);
+      expect(names).toContain('programming');
+    });
+  });
+
+  describe('Subscriptions collection', () => {
+    it('push and pull works for subscriptions', async () => {
+      const subscription = {
+        id: 'user-1_general',
+        userId: 'user-1',
+        subId: 'general',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/subscriptions/push')
+        .send([{ newDocumentState: subscription, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(200);
+      expect(pushRes.body).toEqual([]);
+
+      const pullRes = await authGet('/api/replication/subscriptions/pull');
+      expect(pullRes.status).toBe(200);
+      expect(pullRes.body.documents).toHaveLength(1);
+      expect(pullRes.body.documents[0].userId).toBe('user-1');
+      expect(pullRes.body.documents[0].subId).toBe('general');
+    });
+
+    it('rejects pushing another user\'s subscription with 403', async () => {
+      const subscription = {
+        id: 'other-user_general',
+        userId: 'other-user',
+        subId: 'general',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/subscriptions/push')
+        .send([{ newDocumentState: subscription, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(403);
+      expect(pushRes.body.error).toMatch(/another user/i);
+    });
+
+    it('soft-deletes subscription (unsubscribe)', async () => {
+      const subscription = {
+        id: 'user-1_general',
+        userId: 'user-1',
+        subId: 'general',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      // Subscribe
+      await authPost('/api/replication/subscriptions/push')
+        .send([{ newDocumentState: subscription, assumedMasterState: null }]);
+
+      const pullRes = await authGet('/api/replication/subscriptions/pull');
+      const serverDoc = pullRes.body.documents[0];
+
+      // Unsubscribe (soft-delete)
+      const deleteRes = await authPost('/api/replication/subscriptions/push')
+        .send([{
+          newDocumentState: { ...subscription, _deleted: true, updatedAt: Date.now() },
+          assumedMasterState: serverDoc,
+        }]);
+      expect(deleteRes.status).toBe(200);
+      expect(deleteRes.body).toEqual([]);
+
+      const pullRes2 = await authGet('/api/replication/subscriptions/pull');
+      expect(pullRes2.body.documents).toHaveLength(1);
+      expect(pullRes2.body.documents[0]._deleted).toBe(true);
+    });
+  });
+
+  describe('Posts with subId', () => {
+    it('pushes a post with subId and pulls it back', async () => {
+      const post = {
+        id: 'post-sub-1',
+        title: 'Sub Post',
+        body: 'In a sub',
+        subId: 'general',
+        authorId: 'user-1',
+        authorName: 'testuser',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/posts/push')
+        .send([{ newDocumentState: post, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(200);
+      expect(pushRes.body).toEqual([]);
+
+      const pullRes = await authGet('/api/replication/posts/pull');
+      expect(pullRes.status).toBe(200);
+      expect(pullRes.body.documents[0].subId).toBe('general');
+    });
+
+    it('defaults subId to general when missing', async () => {
+      const post = {
+        id: 'post-no-sub',
+        title: 'Legacy Post',
+        body: 'No sub',
+        authorId: 'user-1',
+        authorName: 'testuser',
+        createdAt: new Date().toISOString(),
+        updatedAt: Date.now(),
+        _deleted: false,
+      };
+
+      const pushRes = await authPost('/api/replication/posts/push')
+        .send([{ newDocumentState: post, assumedMasterState: null }]);
+      expect(pushRes.status).toBe(200);
+
+      const pullRes = await authGet('/api/replication/posts/pull');
+      expect(pullRes.body.documents[0].subId).toBe('general');
+    });
+  });
 });

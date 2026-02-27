@@ -93,12 +93,13 @@ test.describe('Markdown', () => {
     await page.locator('#post-body').fill('## Heading\n\n**Bold text** in the body');
     await page.getByRole('button', { name: 'Create Post' }).click();
 
-    // Go back to home
-    await page.locator('a.back-link').click();
-    await expect(page).toHaveURL('/');
+    // Go back to home (back link goes to sub page now)
+    await page.goto('/');
 
     // The preview should show stripped text (no ## or **)
-    const preview = page.locator('.post-body-preview').first();
+    const postCard = page.locator('.post-card').filter({ hasText: 'Preview Strip Test' });
+    await expect(postCard).toBeVisible({ timeout: 5000 });
+    const preview = postCard.locator('.post-body-preview');
     const text = await preview.textContent();
     expect(text).not.toContain('##');
     expect(text).not.toContain('**');

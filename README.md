@@ -2,7 +2,7 @@
 
 An offline-first Reddit-style discussion app built with RxDB, React, and Express. Data is stored locally in IndexedDB and syncs to a SQLite backend via HTTP push/pull replication with real-time SSE updates.
 
-Users can create posts, leave comments, and continue using the app while the server is down - everything syncs automatically when connectivity is restored.
+Users can create topic-based rooms ("subs"), subscribe to them, create posts, leave comments, and continue using the app while the server is down - everything syncs automatically when connectivity is restored.
 
 ## Screenshots
 
@@ -21,6 +21,7 @@ Users can create posts, leave comments, and continue using the app while the ser
 
 ## Features
 
+- **Subs (Topic Rooms)** — Create and subscribe to topic-based rooms. Every post belongs to a sub. The home feed shows posts from subscribed subs with a toggle to browse all. A collapsible sidebar provides quick navigation to subscribed subs. New users are auto-subscribed to the "general" sub.
 - **Markdown Support** — Write posts and comments using Markdown with a formatting toolbar and live preview. Renders GFM (GitHub Flavored Markdown) including tables, strikethrough, and task lists.
 - **File Attachments** — Attach images and videos to posts and comments. Files are uploaded to the server (5MB limit) or queued offline (50MB queue limit) and synced when connectivity returns. Click images to view full-size in a lightbox.
 - **Voice Recording** — Record voice clips directly in the browser using the MediaRecorder API. Recordings are saved as WebM/Opus audio and flow through the same attachment pipeline.
@@ -48,9 +49,9 @@ rxdb-chat/
 │   └── src/
 │       ├── auth/       Auth context + API calls
 │       ├── database/   RxDB setup, schemas, replication, upload queue/sync
-│       ├── hooks/      useOnlineStatus, useMarkdownEditor, useAttachmentUpload, useVoiceRecorder
-│       ├── components/ NavBar, UserDropdown, AvatarIcon, PostCard, CommentForm, MarkdownToolbar, etc.
-│       ├── pages/      Login, Signup, Home, CreatePost, PostDetail, Profile, Settings
+│       ├── hooks/      useOnlineStatus, useMarkdownEditor, useAttachmentUpload, useVoiceRecorder, useInfiniteScroll
+│       ├── components/ NavBar, SubSidebar, UserDropdown, AvatarIcon, PostCard, CommentForm, MarkdownToolbar, etc.
+│       ├── pages/      Login, Signup, Home, CreatePost, PostDetail, SubList, SubDetail, CreateSub, Profile, Settings
 │       ├── theme/      ThemeContext (light/dark/system)
 │       ├── utils/      stripMarkdown
 │       └── styles/
@@ -58,7 +59,7 @@ rxdb-chat/
 │   └── src/
 │       ├── routes/     /auth, /replication, /upload
 │       ├── middleware/  JWT auth middleware
-│       ├── db.ts       SQLite setup + schema (users, posts, comments, attachments, profiles)
+│       ├── db.ts       SQLite setup + schema (users, posts, comments, attachments, profiles, subs, subscriptions)
 │       ├── sse.ts      RxJS Subject for broadcasting changes
 │       └── app.ts      Express app factory
 ├── shared/             TypeScript interfaces shared by client + server
@@ -106,7 +107,7 @@ Replication runs in the background using RxDB's replication plugin with a custom
 - **Pull**: The client fetches new documents using cursor-based pagination (`updatedAt` + `id`)
 - **SSE Stream**: The server broadcasts changes in real-time so other clients receive updates immediately
 
-Four collections are replicated: **posts**, **comments**, **attachments**, and **profiles**.
+Six collections are replicated: **posts**, **comments**, **attachments**, **profiles**, **subs**, and **subscriptions**. The first four have dedicated SSE streams; subs and subscriptions share pull cycles via `reSync()` to stay within the browser's HTTP/1.1 per-host connection limit.
 
 ### File Uploads & Offline Queue
 
@@ -154,12 +155,12 @@ The app supports three theme modes: **light**, **dark**, and **system** (follows
 npm test
 ```
 
-52 tests across server and client:
+60 tests across server and client:
 
-**Server (38 tests):**
+**Server (46 tests):**
 - Auth middleware (JWT sign/verify, Bearer + query param auth)
-- Signup/login routes (validation, duplicates, credentials, profile creation)
-- Replication push/pull/conflict handling for posts, comments, attachments, and profiles (including ownership authorization)
+- Signup/login routes (validation, duplicates, credentials, profile creation, auto-subscription)
+- Replication push/pull/conflict handling for posts, comments, attachments, profiles, subs, and subscriptions (including ownership authorization and soft-delete revival)
 - File upload endpoint (mime filtering, size limits, static serving)
 
 **Client (14 tests):**
@@ -173,7 +174,7 @@ Server tests use in-memory SQLite databases for full isolation.
 npm run test:e2e
 ```
 
-28 tests across seven suites:
+34 tests across eight suites:
 
 - **Auth** - Signup, login, duplicate username handling, unauthenticated redirects
 - **Posts** - Create post, navigate to detail, verify on home page
@@ -181,6 +182,7 @@ npm run test:e2e
 - **Theme Switcher** - Cycling through light/dark/system, background color changes, persistence across reload
 - **Attachments** - Image upload on post creation, remove pending file, image upload on comment
 - **Profiles** - Dropdown open/close (click, escape, outside click), profile edit (avatar + about), settings theme change, author name links to profile
+- **Subs** - Auto-subscription to general, create sub, browse all subs, subscribe/unsubscribe toggle, create post in sub, feed toggle
 - **Offline Sync** - Two separate browsers: both post comments while the server is down, server restarts, both see each other's comments
 
 The offline sync test launches two independent Chromium instances and manages the server lifecycle directly to verify real-world sync behavior.

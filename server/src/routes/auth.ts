@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import type Database from 'better-sqlite3';
 import { signToken } from '../middleware/auth.js';
+import { DEFAULT_SUB_ID } from 'shared/constants';
 
 export function createAuthRoutes(db: Database.Database): Router {
   const router = Router();
@@ -38,9 +39,15 @@ export function createAuthRoutes(db: Database.Database): Router {
         createdAt,
       );
 
+      const now = Date.now();
       db.prepare(
         'INSERT INTO profiles (id, username, avatarId, about, themeMode, updatedAt, _deleted) VALUES (?, ?, ?, ?, ?, ?, 0)',
-      ).run(id, username, 'default', '', 'system', Date.now());
+      ).run(id, username, 'default', '', 'system', now);
+
+      // Auto-subscribe new user to the default "general" sub
+      db.prepare(
+        'INSERT OR IGNORE INTO subscriptions (id, userId, subId, createdAt, updatedAt, _deleted) VALUES (?, ?, ?, ?, ?, 0)',
+      ).run(`${id}_${DEFAULT_SUB_ID}`, id, DEFAULT_SUB_ID, createdAt, now);
 
       const token = signToken({ userId: id, username });
       res.json({ token, user: { id, username } });

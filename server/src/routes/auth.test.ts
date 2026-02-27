@@ -29,6 +29,20 @@ describe('Auth routes', () => {
       expect(row.username).toBe('alice');
     });
 
+    it('auto-subscribes new user to the general sub', async () => {
+      const res = await request(app)
+        .post('/api/auth/signup')
+        .send({ username: 'alice', password: 'password123' });
+
+      expect(res.status).toBe(200);
+      const userId = res.body.user.id;
+
+      const sub = db.prepare('SELECT * FROM subscriptions WHERE userId = ?').get(userId) as any;
+      expect(sub).toBeDefined();
+      expect(sub.subId).toBe('general');
+      expect(sub._deleted).toBe(0);
+    });
+
     it('creates a default profile on signup', async () => {
       const res = await request(app)
         .post('/api/auth/signup')

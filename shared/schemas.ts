@@ -2,8 +2,28 @@ export interface PostDoc {
   id: string;
   title: string;
   body: string;
+  subId: string;
   authorId: string;
   authorName: string;
+  createdAt: string;
+  updatedAt: number;
+  _deleted: boolean;
+}
+
+export interface SubDoc {
+  id: string;
+  name: string;
+  description: string;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: number;
+  _deleted: boolean;
+}
+
+export interface SubscriptionDoc {
+  id: string;
+  userId: string;
+  subId: string;
   createdAt: string;
   updatedAt: number;
   _deleted: boolean;

@@ -2,8 +2,9 @@ import { Router, Request, Response } from 'express';
 import type Database from 'better-sqlite3';
 import { authMiddleware } from '../middleware/auth.js';
 import { sseSubject } from '../sse.js';
+import { DEFAULT_SUB_ID } from 'shared/constants';
 
-const VALID_COLLECTIONS = ['posts', 'comments', 'attachments', 'profiles'] as const;
+const VALID_COLLECTIONS = ['posts', 'comments', 'attachments', 'profiles', 'subs', 'subscriptions'] as const;
 type CollectionName = (typeof VALID_COLLECTIONS)[number];
 
 function isValidCollection(name: string): name is CollectionName {
@@ -11,13 +12,15 @@ function isValidCollection(name: string): name is CollectionName {
 }
 
 const COLUMN_MAP: Record<CollectionName, string[]> = {
-  posts: ['id', 'title', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
+  posts: ['id', 'title', 'body', 'subId', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
   comments: ['id', 'postId', 'body', 'authorId', 'authorName', 'createdAt', 'updatedAt', '_deleted'],
   attachments: [
     'id', 'parentId', 'parentType', 'filename', 'mimeType', 'sizeBytes',
     'storageUrl', 'uploadStatus', 'authorId', 'createdAt', 'updatedAt', '_deleted',
   ],
   profiles: ['id', 'username', 'avatarId', 'about', 'themeMode', 'updatedAt', '_deleted'],
+  subs: ['id', 'name', 'description', 'creatorId', 'createdAt', 'updatedAt', '_deleted'],
+  subscriptions: ['id', 'userId', 'subId', 'createdAt', 'updatedAt', '_deleted'],
 };
 
 export function createReplicationRoutes(db: Database.Database): Router {
@@ -83,6 +86,16 @@ export function createReplicationRoutes(db: Database.Database): Router {
       }
     }
 
+    // Ownership check: users can only push their own subscriptions
+    if (collection === 'subscriptions') {
+      for (const { newDocumentState } of changeRows) {
+        if (newDocumentState.userId !== req.user!.userId) {
+          res.status(403).json({ error: 'Cannot modify another user\'s subscription' });
+          return;
+        }
+      }
+    }
+
     const conflicts: Record<string, unknown>[] = [];
     const written: Record<string, unknown>[] = [];
 
@@ -111,7 +124,14 @@ export function createReplicationRoutes(db: Database.Database): Router {
           const existingUpdatedAt = existingRow.updatedAt as number;
           const assumedUpdatedAt = assumedMasterState?.updatedAt as number | undefined;
 
-          if (assumedUpdatedAt !== existingUpdatedAt) {
+          // Allow re-creation of previously soft-deleted documents:
+          // the client may send a fresh insert (assumedMasterState=null)
+          // or an update with a stale assumedMasterState after unsubscribe.
+          const isRevival =
+            existingRow._deleted === 1 &&
+            !newDocumentState._deleted;
+
+          if (assumedUpdatedAt !== existingUpdatedAt && !isRevival) {
             conflicts.push({ ...existingRow, _deleted: existingRow._deleted === 1 });
             continue;
           }
@@ -121,7 +141,10 @@ export function createReplicationRoutes(db: Database.Database): Router {
         const values = columns.map((c) => {
           if (c === 'updatedAt') return now;
           if (c === '_deleted') return newDocumentState._deleted ? 1 : 0;
-          return newDocumentState[c] ?? null;
+          const val = newDocumentState[c] ?? null;
+          // Default subId for posts from older clients
+          if (c === 'subId' && val === null && collection === 'posts') return DEFAULT_SUB_ID;
+          return val;
         });
 
         upsertStmt.run(...values);
