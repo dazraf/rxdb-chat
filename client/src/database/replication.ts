@@ -12,6 +12,15 @@ let cleanupFns: (() => void)[] = [];
 
 export const serverOnline$ = new BehaviorSubject<boolean>(true);
 
+/** Called when replication gets a 401 — signals that the token is invalid. */
+let authErrorCallback: (() => void) | null = null;
+export function setOnAuthError(cb: (() => void) | null) {
+  authErrorCallback = cb;
+}
+function notifyAuthError() {
+  if (authErrorCallback) authErrorCallback();
+}
+
 // Collections that get their own SSE stream. Limit to 4 to stay within
 // the browser's HTTP/1.1 per-host connection cap (6), leaving headroom
 // for pull/push fetch requests.
@@ -56,6 +65,7 @@ export function startReplication(db: AppDatabase, token: string) {
             },
             body: JSON.stringify(changeRows),
           });
+          if (res.status === 401) { notifyAuthError(); throw new Error('Unauthorized'); }
           if (!res.ok) throw new Error(`Push failed: ${res.status}`);
           return await res.json();
         },
@@ -74,6 +84,7 @@ export function startReplication(db: AppDatabase, token: string) {
           const res = await fetch(`${API_BASE}/${name}/pull?${params}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
+          if (res.status === 401) { notifyAuthError(); throw new Error('Unauthorized'); }
           if (!res.ok) throw new Error(`Pull failed: ${res.status}`);
           return await res.json();
         },
