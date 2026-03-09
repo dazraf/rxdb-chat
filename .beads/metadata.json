@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "rxdb_chat",
+  "project_id": "543a363d-88dd-4999-a4cd-7d9e7fbecf46"
+}
